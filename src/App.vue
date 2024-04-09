@@ -107,10 +107,17 @@ const retrieveNodeStatus = async () => {
     node3Available.value = result.vismin
 }
 
-const fetchPage = (page) => {
+const fetchPage = async ({ page }) => {
     loading.value = true
 
-    // TODO: Add API call here
+    await retrieveTotalItems()
+
+    const params = new URLSearchParams()
+    params.set('page', page - 1)
+    params.set('itemsPerPage', itemsPerPage.value)
+    const appointments = await fetch(`${API_URL}/appointments?${params}`).then((res) => res.json())
+
+    items.splice(0, items.length, ...appointments)
 
     loading.value = false
 }
