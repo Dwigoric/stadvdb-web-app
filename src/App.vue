@@ -126,25 +126,23 @@ const fetchPage = async ({ page = 1 } = {}) => {
     loading.value = false
 }
 
-const submitForm = () => {
-    items.push({
-        apptid: generateRandomID(),
+const submitForm = async () => {
+    const data = {
+        ...formFields,
         pxid: generateRandomID(),
         clinicid: generateRandomID(),
-        doctorid: generateRandomID(),
-        status: formFields.status,
-        TimeQueued: formFields.TimeQueued,
-        QueueDate: formFields.QueueDate,
-        StartTime: formFields.StartTime,
-        EndTime: formFields.EndTime,
-        type: formFields.type,
-        isVirtual: formFields.isVirtual,
-        City: formFields.City,
-        Province: formFields.Province,
-        RegionName: formFields.RegionName
-    })
+        doctorid: generateRandomID()
+    }
 
-    // TODO: Add API call here
+    const newID = await fetch(`${API_URL}/appointments`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+        .then((res) => res.json())
+        .then((data) => data.apptid)
+
+    items.push({ ...data, apptid: newID })
 
     resetFormFields()
     totalItems.value++
@@ -165,21 +163,27 @@ const deleteItem = (item) => {
     deleteDialog.value = true
 }
 
-const saveEdit = () => {
+const saveEdit = async () => {
     Object.assign(items[editedIndex.value], formFields)
     editDialog.value = false
 
-    // TODO: Add API call here
+    const idToEdit = items[editedIndex.value].apptid
+    await fetch(`${API_URL}/appointments/${idToEdit}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formFields)
+    })
 
     editedIndex.value = -1
     resetFormFields()
 }
 
-const deleteItemConfirm = () => {
+const deleteItemConfirm = async () => {
     items.splice(editedIndex.value, 1)
     deleteDialog.value = false
 
-    // TODO: Add API call here
+    const idToDelete = items[editedIndex.value].apptid
+    await fetch(`${API_URL}/appointments/${idToDelete}`, { method: 'DELETE' })
 
     editedIndex.value = -1
     resetFormFields()
