@@ -36,7 +36,7 @@ const headers = [
 // Refs
 const loading = ref(false)
 const itemsPerPage = ref(10)
-const totalItems = ref(0)
+const totalItems = ref(100)
 
 const editedIndex = ref(-1)
 const editDialog = ref(false)
@@ -83,8 +83,6 @@ const resetFormFields = () => {
 
 // Main
 const retrieveTotalItems = () => {
-    totalItems.value = items.length
-
     // TODO: Add API call here
 }
 
@@ -315,11 +313,11 @@ onMounted(retrieveTotalItems)
             </v-card>
         </v-dialog>
 
-        <v-data-table
+        <v-data-table-server
+            v-model:items-per-page="itemsPerPage"
             :headers="headers"
             :items="items"
             :items-length="totalItems"
-            :items-per-page="itemsPerPage"
             :items-per-page-options="[5, 10, 20, 50, 100]"
             :loading="loading"
             class="bg-light-blue-darken-4 rounded-xl px-4 pb-3"
@@ -331,7 +329,7 @@ onMounted(retrieveTotalItems)
                 <v-icon class="me-2" size="small" @click="editItem(item)"> mdi-pencil </v-icon>
                 <v-icon size="small" @click="deleteItem(item)"> mdi-delete </v-icon>
             </template>
-        </v-data-table>
+        </v-data-table-server>
     </div>
 </template>
 
