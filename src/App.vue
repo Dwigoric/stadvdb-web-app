@@ -3,6 +3,8 @@
 import { onMounted, reactive, ref } from 'vue'
 
 // Constants
+import { API_URL } from '@/constants/api_url.js'
+
 const intervals = new Set()
 
 const headers = [
@@ -94,8 +96,12 @@ const retrieveTotalItems = () => {
     // TODO: Add API call here
 }
 
-const retrieveNodeStatus = () => {
-    // TODO: Add API call here
+const retrieveNodeStatus = async () => {
+    const result = await fetch(`${API_URL}/status`).then((res) => res.json())
+
+    node1Available.value = result.master
+    node2Available.value = result.luzon
+    node3Available.value = result.vismin
 }
 
 const fetchPage = (page) => {
@@ -169,6 +175,7 @@ const deleteItemConfirm = () => {
 // Lifecycle hooks
 onMounted(() => {
     retrieveTotalItems()
+    retrieveNodeStatus()
     intervals.add(setInterval(retrieveNodeStatus, 10_000)) // Check every 10 seconds
 })
 </script>
