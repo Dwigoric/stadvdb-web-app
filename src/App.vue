@@ -92,8 +92,11 @@ const resetFormFields = () => {
 }
 
 // Main
-const retrieveTotalItems = () => {
-    // TODO: Add API call here
+const retrieveTotalItems = async () => {
+    const region = regionUsed.value === 'ALL' ? '' : regionUsed.value.toLowerCase()
+    const { size } = await fetch(`${API_URL}/appointments${region}/size`).then((res) => res.json())
+
+    totalItems.value = size
 }
 
 const retrieveNodeStatus = async () => {
