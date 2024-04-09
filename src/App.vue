@@ -125,6 +125,7 @@ const submitForm = () => {
     // TODO: Add API call here
 
     resetFormFields()
+    totalItems.value++
 }
 
 const editItem = (item) => {
@@ -160,6 +161,7 @@ const deleteItemConfirm = () => {
 
     editedIndex.value = -1
     resetFormFields()
+    totalItems.value--
 }
 
 // Lifecycle hooks
