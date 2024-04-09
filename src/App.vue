@@ -1,6 +1,6 @@
 <script setup>
 // Package imports
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
 
 // Constants
 const headers = [
@@ -29,10 +29,16 @@ const headers = [
     { title: 'Virtual?', key: 'isVirtual', value: (item) => (item.isVirtual ? 'Yes' : 'No') },
     { title: 'City', value: 'City' },
     { title: 'Province', value: 'Province' },
-    { title: 'Region', value: 'RegionName' }
+    { title: 'Region', value: 'RegionName' },
+    { title: 'Actions', key: 'actions', sortable: false }
 ]
 
 // Refs
+const editedIndex = ref(-1)
+
+const editDialog = ref(false)
+const deleteDialog = ref(false)
+
 const formFields = reactive({
     status: '',
     TimeQueued: '',
@@ -60,6 +66,17 @@ const generateRandomID = () => {
     return id
 }
 
+const resetFormFields = () => {
+    formFields.status = ''
+    formFields.TimeQueued = ''
+    formFields.QueueDate = ''
+    formFields.StartTime = ''
+    formFields.EndTime = ''
+    formFields.type = ''
+    formFields.isVirtual = false
+    formFields.RegionName = ''
+}
+
 const submitForm = () => {
     items.push({
         apptid: generateRandomID(),
@@ -80,15 +97,38 @@ const submitForm = () => {
 
     // TODO: Add API call here
 
-    // Reset form fields
-    formFields.status = ''
-    formFields.TimeQueued = ''
-    formFields.QueueDate = ''
-    formFields.StartTime = ''
-    formFields.EndTime = ''
-    formFields.type = ''
-    formFields.isVirtual = false
-    formFields.RegionName = ''
+    resetFormFields()
+}
+
+const editItem = (item) => {
+    editedIndex.value = items.indexOf(item)
+    Object.assign(formFields, item)
+    editDialog.value = true
+}
+
+const deleteItem = (item) => {
+    editedIndex.value = items.indexOf(item)
+    deleteDialog.value = true
+}
+
+const saveEdit = () => {
+    Object.assign(items[editedIndex.value], formFields)
+    editDialog.value = false
+
+    // TODO: Add API call here
+
+    editedIndex.value = -1
+    resetFormFields()
+}
+
+const deleteItemConfirm = () => {
+    items.splice(editedIndex.value, 1)
+    deleteDialog.value = false
+
+    // TODO: Add API call here
+
+    editedIndex.value = -1
+    resetFormFields()
 }
 </script>
 
@@ -173,11 +213,90 @@ const submitForm = () => {
                 </v-card>
             </template>
         </v-dialog>
+
+        <v-dialog v-model="editDialog">
+            <v-card class="bg-blue-grey-darken-4">
+                <v-card-title>
+                    <span class="headline">Edit Appointment</span>
+                </v-card-title>
+                <v-card-text>
+                    <v-form>
+                        <v-switch v-model="formFields.isVirtual" label="Virtual?" />
+                        <v-select
+                            v-model="formFields.status"
+                            :items="['Queued', 'Completed']"
+                            label="Status"
+                        />
+                        <v-text-field
+                            v-model="formFields.TimeQueued"
+                            disabled="disabled"
+                            label="Time Queued"
+                            type="datetime-local"
+                        />
+                        <v-text-field
+                            v-model="formFields.QueueDate"
+                            label="Queued Date"
+                            type="datetime-local"
+                        />
+                        <v-text-field
+                            v-model="formFields.StartTime"
+                            label="Start Time"
+                            type="datetime-local"
+                        />
+                        <v-text-field
+                            v-model="formFields.EndTime"
+                            label="End Time"
+                            type="datetime-local"
+                        />
+                        <v-select
+                            v-model="formFields.type"
+                            :items="['Consultation', 'Inpatient']"
+                            label="Type"
+                        />
+                        <v-select
+                            v-model="formFields.RegionName"
+                            :items="['National Capital Region (NCR)', 'Central Visayas (VII)']"
+                            label="Region"
+                        />
+                    </v-form>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer />
+                    <v-btn color="blue darken-1" text="" @click="editDialog = false">
+                        Cancel
+                    </v-btn>
+                    <v-btn color="blue darken-1" text="" @click="saveEdit"> Save </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <v-dialog v-model="deleteDialog">
+            <v-card class="bg-blue-grey-darken-4 w-50 align-self-center">
+                <v-card-title>
+                    <span class="headline">Delete Appointment</span>
+                </v-card-title>
+                <v-card-text>
+                    <p>Are you sure you want to delete this appointment?</p>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer />
+                    <v-btn color="blue darken-1" text="" @click="deleteDialog = false">
+                        Cancel
+                    </v-btn>
+                    <v-btn color="blue darken-1" text="" @click="deleteItemConfirm"> Delete </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
         <v-data-table
             :headers="headers"
             :items="items"
             class="bg-light-blue-darken-4 rounded-xl px-4 pb-3"
         >
+            <template #item.actions="{ item }">
+                <v-icon class="me-2" size="small" @click="editItem(item)"> mdi-pencil </v-icon>
+                <v-icon size="small" @click="deleteItem(item)"> mdi-delete </v-icon>
+            </template>
         </v-data-table>
     </div>
 </template>
