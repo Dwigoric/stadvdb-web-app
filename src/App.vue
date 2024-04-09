@@ -42,6 +42,10 @@ const editedIndex = ref(-1)
 const editDialog = ref(false)
 const deleteDialog = ref(false)
 
+const node1Available = ref(false)
+const node2Available = ref(false)
+const node3Available = ref(false)
+
 const formFields = reactive({
     status: '',
     TimeQueued: '',
@@ -86,6 +90,10 @@ const retrieveTotalItems = () => {
     // TODO: Add API call here
 }
 
+const retrieveNodeStatus = () => {
+    // TODO: Add API call here
+}
+
 const fetchPage = (page) => {
     loading.value = true
 
@@ -118,12 +126,16 @@ const submitForm = () => {
 }
 
 const editItem = (item) => {
+    if (!node1Available.value) return
+
     editedIndex.value = items.indexOf(item)
     Object.assign(formFields, item)
     editDialog.value = true
 }
 
 const deleteItem = (item) => {
+    if (!node1Available.value) return
+
     editedIndex.value = items.indexOf(item)
     deleteDialog.value = true
 }
@@ -149,15 +161,49 @@ const deleteItemConfirm = () => {
 }
 
 // Lifecycle hooks
-onMounted(retrieveTotalItems)
+onMounted(() => {
+    retrieveTotalItems()
+    retrieveNodeStatus()
+})
 </script>
 
 <template>
     <div id="content">
+        <div id="node-status">
+            <div class="node mx-2">
+                <v-icon :color="node1Available ? 'success' : 'error'" size="x-large">
+                    {{ node1Available ? 'mdi-server' : 'mdi-server-off' }}
+                </v-icon>
+                <v-chip :color="node1Available ? 'success' : 'error'">
+                    <v-icon>{{ node1Available ? 'mdi-check' : 'mdi-close' }}</v-icon>
+                    <span>Source Node</span>
+                </v-chip>
+            </div>
+            <div class="node mx-2">
+                <v-icon :color="node2Available ? 'success' : 'error'" size="x-large">
+                    {{ node2Available ? 'mdi-server' : 'mdi-server-off' }}
+                </v-icon>
+                <v-chip :color="node2Available ? 'success' : 'error'">
+                    <v-icon>{{ node2Available ? 'mdi-check' : 'mdi-close' }}</v-icon>
+                    <span>Luzon Replica</span>
+                </v-chip>
+            </div>
+            <div class="node mx-2">
+                <v-icon :color="node3Available ? 'success' : 'error'" size="x-large">
+                    {{ node3Available ? 'mdi-server' : 'mdi-server-off' }}
+                </v-icon>
+                <v-chip :color="node3Available ? 'success' : 'error'">
+                    <v-icon>{{ node3Available ? 'mdi-check' : 'mdi-close' }}</v-icon>
+                    <span>Vismin Replica</span>
+                </v-chip>
+            </div>
+        </div>
+
         <v-dialog>
             <template #activator="{ props: activatorProps }">
                 <v-btn
-                    class="mb-5"
+                    :disabled="!node1Available"
+                    class="my-5"
                     color="primary"
                     dark
                     v-bind="activatorProps"
@@ -173,9 +219,6 @@ onMounted(retrieveTotalItems)
             </template>
             <template #default="{ isActive }">
                 <v-card class="bg-blue-grey-darken-4 w-75 align-self-center">
-                    <v-card-title>
-                        <span class="headline">Create Appointment</span>
-                    </v-card-title>
                     <v-card-text>
                         <v-form>
                             <v-switch v-model="formFields.isVirtual" label="Virtual?" />
@@ -326,8 +369,12 @@ onMounted(retrieveTotalItems)
             @update:options="fetchPage"
         >
             <template #item.actions="{ item }">
-                <v-icon class="me-2" size="small" @click="editItem(item)"> mdi-pencil </v-icon>
-                <v-icon size="small" @click="deleteItem(item)"> mdi-delete </v-icon>
+                <v-icon class="me-2" size="small" @click="editItem(item)">
+                    {{ node1Available ? 'mdi-pencil' : 'mdi-pencil-off' }}
+                </v-icon>
+                <v-icon size="small" @click="deleteItem(item)">
+                    {{ node1Available ? 'mdi-delete' : 'mdi-delete-off' }}
+                </v-icon>
             </template>
         </v-data-table-server>
     </div>
@@ -340,5 +387,18 @@ onMounted(retrieveTotalItems)
     flex-flow: column nowrap;
     align-items: center;
     justify-content: flex-start;
+}
+
+#node-status {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-around;
+}
+
+.node {
+    display: flex;
+    flex-flow: column nowrap;
+    align-items: center;
+    gap: 10px;
 }
 </style>
