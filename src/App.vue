@@ -1,6 +1,6 @@
 <script setup>
 // Package imports
-import { onMounted, reactive, ref, watch } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 
 // Constants
 import { API_URL } from '@/constants/api_url.js'
@@ -50,7 +50,7 @@ const node1Available = ref(false)
 const node2Available = ref(false)
 const node3Available = ref(false)
 
-const regionUsed = ref('ALL')
+const nodeUsed = ref(0)
 
 const formFields = reactive({
     status: '',
@@ -93,8 +93,7 @@ const resetFormFields = () => {
 
 // Main
 const retrieveTotalItems = async () => {
-    const region = regionUsed.value === 'ALL' ? '' : `/${regionUsed.value.toLowerCase()}`
-    const { size } = await fetch(`${API_URL}/appointments${region}/size`).then((res) => res.json())
+    const { size } = await fetch(`${API_URL}/appointments/size`).then((res) => res.json())
 
     totalItems.value = size
 }
@@ -102,9 +101,12 @@ const retrieveTotalItems = async () => {
 const retrieveNodeStatus = async () => {
     const result = await fetch(`${API_URL}/status`).then((res) => res.json())
 
-    node1Available.value = result.master
-    node2Available.value = result.luzon
-    node3Available.value = result.vismin
+    node1Available.value = result.node1
+    node2Available.value = result.node2
+    node3Available.value = result.node3
+
+    // If the node being used is not available, reset it to 0
+    if (nodeUsed.value !== 0 && !result[`node${nodeUsed.value}`]) nodeUsed.value = 0
 }
 
 const fetchPage = async ({ page = 1 } = {}) => {
@@ -112,14 +114,11 @@ const fetchPage = async ({ page = 1 } = {}) => {
 
     await retrieveTotalItems()
 
-    const region = regionUsed.value === 'ALL' ? '' : `/${regionUsed.value.toLowerCase()}`
-
     const params = new URLSearchParams()
     params.set('page', page - 1)
     params.set('itemsPerPage', itemsPerPage.value)
-    const appointments = await fetch(`${API_URL}/appointments${region}?${params}`).then((res) =>
-        res.json()
-    )
+    if (nodeUsed.value !== 0) params.set('node', nodeUsed.value)
+    const appointments = await fetch(`${API_URL}/appointments?${params}`).then((res) => res.json())
 
     items.splice(0, items.length, ...appointments)
 
@@ -134,10 +133,14 @@ const submitForm = async () => {
         doctorid: generateRandomID()
     }
 
+    const body = { data }
+
+    if (nodeUsed.value !== 0) body.node = nodeUsed.value
+
     const newID = await fetch(`${API_URL}/appointments`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify(body)
     })
         .then((res) => res.json())
         .then((data) => data.apptid)
@@ -167,11 +170,15 @@ const saveEdit = async () => {
     Object.assign(items[editedIndex.value], formFields)
     editDialog.value = false
 
+    const body = { data: formFields }
+
+    if (nodeUsed.value !== 0) body.node = nodeUsed.value
+
     const idToEdit = items[editedIndex.value].apptid
     await fetch(`${API_URL}/appointments/${idToEdit}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formFields)
+        body: JSON.stringify(body)
     })
 
     editedIndex.value = -1
@@ -182,8 +189,18 @@ const deleteItemConfirm = async () => {
     items.splice(editedIndex.value, 1)
     deleteDialog.value = false
 
+    const options = {}
+
+    if (nodeUsed.value !== 0) {
+        options.headers = { 'Content-Type': 'application/json' }
+        options.body = JSON.stringify({ node: nodeUsed.value })
+    }
+
     const idToDelete = items[editedIndex.value].apptid
-    await fetch(`${API_URL}/appointments/${idToDelete}`, { method: 'DELETE' })
+    await fetch(`${API_URL}/appointments/${idToDelete}`, {
+        method: 'DELETE',
+        ...options
+    })
 
     editedIndex.value = -1
     resetFormFields()
@@ -196,9 +213,6 @@ onMounted(() => {
     retrieveNodeStatus()
     intervals.add(setInterval(retrieveNodeStatus, 10_000)) // Check every 10 seconds
 })
-
-// Watch region used, then fetch page
-watch(regionUsed, fetchPage, { immediate: true })
 </script>
 
 <template>
@@ -208,35 +222,51 @@ watch(regionUsed, fetchPage, { immediate: true })
                 <v-icon :color="node1Available ? 'success' : 'error'" size="x-large">
                     {{ node1Available ? 'mdi-server' : 'mdi-server-off' }}
                 </v-icon>
-                <v-chip :color="node1Available ? 'success' : 'error'">
+                <v-chip
+                    :color="node1Available ? 'success' : 'error'"
+                    @click="nodeUsed = node1Available ? 1 : nodeUsed"
+                >
                     <v-icon>{{ node1Available ? 'mdi-check' : 'mdi-close' }}</v-icon>
-                    <span>Source Node</span>
+                    <span>Node 1</span>
                 </v-chip>
             </div>
             <div class="node mx-2">
                 <v-icon :color="node2Available ? 'success' : 'error'" size="x-large">
                     {{ node2Available ? 'mdi-server' : 'mdi-server-off' }}
                 </v-icon>
-                <v-chip :color="node2Available ? 'success' : 'error'">
+                <v-chip
+                    :color="node2Available ? 'success' : 'error'"
+                    @click="nodeUsed = node2Available ? 2 : nodeUsed"
+                >
                     <v-icon>{{ node2Available ? 'mdi-check' : 'mdi-close' }}</v-icon>
-                    <span>Luzon Replica</span>
+                    <span>Node 2</span>
                 </v-chip>
             </div>
             <div class="node mx-2">
                 <v-icon :color="node3Available ? 'success' : 'error'" size="x-large">
                     {{ node3Available ? 'mdi-server' : 'mdi-server-off' }}
                 </v-icon>
-                <v-chip :color="node3Available ? 'success' : 'error'">
+                <v-chip
+                    :color="node3Available ? 'success' : 'error'"
+                    @click="nodeUsed = node3Available ? 3 : nodeUsed"
+                >
                     <v-icon>{{ node3Available ? 'mdi-check' : 'mdi-close' }}</v-icon>
-                    <span>Vismin Replica</span>
+                    <span>Node 3</span>
                 </v-chip>
             </div>
         </div>
 
+        <v-chip class="mt-5" @click="nodeUsed = 0">
+            <span>
+                You are using {{ nodeUsed === 0 ? 'any node' : `Node ${nodeUsed} only` }}.
+                {{ nodeUsed === 0 ? '' : ' Click to use any node.' }}
+            </span>
+        </v-chip>
+
         <v-dialog>
             <template #activator="{ props: activatorProps }">
                 <v-btn
-                    :disabled="!node1Available"
+                    :disabled="!node1Available && !node2Available && !node3Available"
                     class="my-5"
                     color="primary"
                     dark
@@ -367,7 +397,7 @@ watch(regionUsed, fetchPage, { immediate: true })
                     <v-btn color="blue darken-1" text="" @click="editDialog = false">
                         Cancel
                     </v-btn>
-                    <v-btn color="blue darken-1" text="" @click="saveEdit"> Save </v-btn>
+                    <v-btn color="blue darken-1" text="" @click="saveEdit">Save</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -385,7 +415,7 @@ watch(regionUsed, fetchPage, { immediate: true })
                     <v-btn color="blue darken-1" text="" @click="deleteDialog = false">
                         Cancel
                     </v-btn>
-                    <v-btn color="blue darken-1" text="" @click="deleteItemConfirm"> Delete </v-btn>
+                    <v-btn color="blue darken-1" text="" @click="deleteItemConfirm">Delete</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -402,25 +432,20 @@ watch(regionUsed, fetchPage, { immediate: true })
             no-data-text="No appointments found"
             @update:options="fetchPage"
         >
-            <template #thead>
-                <tr>
-                    <td>
-                        <v-select
-                            v-model="regionUsed"
-                            :items="['ALL', 'Luzon', 'Vismin']"
-                            hide-details
-                            label="Search"
-                            single-line
-                        />
-                    </td>
-                </tr>
-            </template>
             <template #item.actions="{ item }">
                 <v-icon class="me-2" size="small" @click="editItem(item)">
-                    {{ node1Available ? 'mdi-pencil' : 'mdi-pencil-off' }}
+                    {{
+                        node1Available || node2Available || node3Available
+                            ? 'mdi-pencil'
+                            : 'mdi-pencil-off'
+                    }}
                 </v-icon>
                 <v-icon size="small" @click="deleteItem(item)">
-                    {{ node1Available ? 'mdi-delete' : 'mdi-delete-off' }}
+                    {{
+                        node1Available || node2Available || node3Available
+                            ? 'mdi-delete'
+                            : 'mdi-delete-off'
+                    }}
                 </v-icon>
             </template>
         </v-data-table-server>
