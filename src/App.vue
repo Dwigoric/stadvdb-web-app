@@ -5,9 +5,9 @@ import { reactive, ref } from 'vue'
 // Constants
 const headers = [
     { title: 'Appointment ID', value: 'apptid' },
-    { title: 'Patient ID', value: 'pxid' },
-    { title: 'Clinic ID', value: 'clinicid' },
-    { title: 'Doctor ID', value: 'doctorid' },
+    // { title: 'Patient ID', value: 'pxid' },
+    // { title: 'Clinic ID', value: 'clinicid' },
+    // { title: 'Doctor ID', value: 'doctorid' },
     { title: 'Status', value: 'status' },
     {
         title: 'Time Queued',
@@ -27,8 +27,8 @@ const headers = [
     { title: 'End Time', key: 'EndTime', value: (item) => new Date(item.EndTime).toLocaleString() },
     { title: 'Type', value: 'type' },
     { title: 'Virtual?', key: 'isVirtual', value: (item) => (item.isVirtual ? 'Yes' : 'No') },
-    { title: 'City', value: 'City' },
-    { title: 'Province', value: 'Province' },
+    // { title: 'City', value: 'City' },
+    // { title: 'Province', value: 'Province' },
     { title: 'Region', value: 'RegionName' },
     { title: 'Actions', key: 'actions', sortable: false }
 ]
