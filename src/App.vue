@@ -1,6 +1,6 @@
 <script setup>
 // Package imports
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, watch } from 'vue'
 
 // Constants
 import { API_URL } from '@/constants/api_url.js'
@@ -93,7 +93,7 @@ const resetFormFields = () => {
 
 // Main
 const retrieveTotalItems = async () => {
-    const region = regionUsed.value === 'ALL' ? '' : regionUsed.value.toLowerCase()
+    const region = regionUsed.value === 'ALL' ? '' : `/${regionUsed.value.toLowerCase()}`
     const { size } = await fetch(`${API_URL}/appointments${region}/size`).then((res) => res.json())
 
     totalItems.value = size
@@ -107,15 +107,19 @@ const retrieveNodeStatus = async () => {
     node3Available.value = result.vismin
 }
 
-const fetchPage = async ({ page }) => {
+const fetchPage = async ({ page = 1 } = {}) => {
     loading.value = true
 
     await retrieveTotalItems()
 
+    const region = regionUsed.value === 'ALL' ? '' : `/${regionUsed.value.toLowerCase()}`
+
     const params = new URLSearchParams()
     params.set('page', page - 1)
     params.set('itemsPerPage', itemsPerPage.value)
-    const appointments = await fetch(`${API_URL}/appointments?${params}`).then((res) => res.json())
+    const appointments = await fetch(`${API_URL}/appointments${region}?${params}`).then((res) =>
+        res.json()
+    )
 
     items.splice(0, items.length, ...appointments)
 
@@ -188,6 +192,9 @@ onMounted(() => {
     retrieveNodeStatus()
     intervals.add(setInterval(retrieveNodeStatus, 10_000)) // Check every 10 seconds
 })
+
+// Watch region used, then fetch page
+watch(regionUsed, fetchPage, { immediate: true })
 </script>
 
 <template>
