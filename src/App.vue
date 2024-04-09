@@ -88,7 +88,7 @@ const retrieveTotalItems = () => {
     // TODO: Add API call here
 }
 
-const fetchPage = ({ page, itemsPerPage }) => {
+const fetchPage = (page) => {
     loading.value = true
 
     // TODO: Add API call here
