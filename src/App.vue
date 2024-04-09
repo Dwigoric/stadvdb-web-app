@@ -296,6 +296,7 @@ const deleteItemConfirm = () => {
         <v-data-table
             :headers="headers"
             :items="items"
+            :items-per-page-options="[5, 10, 20, 50, 100]"
             class="bg-light-blue-darken-4 rounded-xl px-4 pb-3"
         >
             <template #item.actions="{ item }">
