@@ -48,6 +48,8 @@ const node1Available = ref(false)
 const node2Available = ref(false)
 const node3Available = ref(false)
 
+const regionUsed = ref('ALL')
+
 const formFields = reactive({
     status: '',
     TimeQueued: '',
@@ -372,6 +374,19 @@ onMounted(() => {
             no-data-text="No appointments found"
             @update:options="fetchPage"
         >
+            <template #thead>
+                <tr>
+                    <td>
+                        <v-select
+                            v-model="regionUsed"
+                            :items="['ALL', 'Luzon', 'Vismin']"
+                            hide-details
+                            label="Search"
+                            single-line
+                        />
+                    </td>
+                </tr>
+            </template>
             <template #item.actions="{ item }">
                 <v-icon class="me-2" size="small" @click="editItem(item)">
                     {{ node1Available ? 'mdi-pencil' : 'mdi-pencil-off' }}
