@@ -141,7 +141,12 @@ const deleteItemConfirm = () => {
                     color="primary"
                     dark
                     v-bind="activatorProps"
-                    @click="formFields.TimeQueued = new Date().toISOString().slice(0, 16)"
+                    @click="
+                        () => {
+                            resetFormFields()
+                            formFields.TimeQueued = new Date().toISOString().slice(0, 16)
+                        }
+                    "
                 >
                     Create Appointment
                 </v-btn>
