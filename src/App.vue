@@ -1,6 +1,6 @@
 <script setup>
 // Package imports
-import { reactive, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 
 // Constants
 const headers = [
@@ -34,8 +34,11 @@ const headers = [
 ]
 
 // Refs
-const editedIndex = ref(-1)
+const loading = ref(false)
+const itemsPerPage = ref(10)
+const totalItems = ref(0)
 
+const editedIndex = ref(-1)
 const editDialog = ref(false)
 const deleteDialog = ref(false)
 
@@ -54,7 +57,8 @@ const formFields = reactive({
 
 const items = reactive([])
 
-// Functions
+// --- Functions ---
+// Utils
 const generateRandomID = () => {
     let id = ''
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
@@ -75,6 +79,21 @@ const resetFormFields = () => {
     formFields.type = ''
     formFields.isVirtual = false
     formFields.RegionName = ''
+}
+
+// Main
+const retrieveTotalItems = () => {
+    totalItems.value = items.length
+
+    // TODO: Add API call here
+}
+
+const fetchPage = ({ page, itemsPerPage }) => {
+    loading.value = true
+
+    // TODO: Add API call here
+
+    loading.value = false
 }
 
 const submitForm = () => {
@@ -130,6 +149,9 @@ const deleteItemConfirm = () => {
     editedIndex.value = -1
     resetFormFields()
 }
+
+// Lifecycle hooks
+onMounted(retrieveTotalItems)
 </script>
 
 <template>
@@ -296,8 +318,14 @@ const deleteItemConfirm = () => {
         <v-data-table
             :headers="headers"
             :items="items"
+            :items-length="totalItems"
+            :items-per-page="itemsPerPage"
             :items-per-page-options="[5, 10, 20, 50, 100]"
+            :loading="loading"
             class="bg-light-blue-darken-4 rounded-xl px-4 pb-3"
+            loading-text="Loading..."
+            no-data-text="No appointments found"
+            @update:options="fetchPage"
         >
             <template #item.actions="{ item }">
                 <v-icon class="me-2" size="small" @click="editItem(item)"> mdi-pencil </v-icon>
