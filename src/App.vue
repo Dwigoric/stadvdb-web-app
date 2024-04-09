@@ -3,6 +3,8 @@
 import { onMounted, reactive, ref } from 'vue'
 
 // Constants
+const intervals = new Set()
+
 const headers = [
     { title: 'Appointment ID', value: 'apptid' },
     // { title: 'Patient ID', value: 'pxid' },
@@ -163,7 +165,7 @@ const deleteItemConfirm = () => {
 // Lifecycle hooks
 onMounted(() => {
     retrieveTotalItems()
-    retrieveNodeStatus()
+    intervals.add(setInterval(retrieveNodeStatus, 10_000)) // Check every 10 seconds
 })
 </script>
 
