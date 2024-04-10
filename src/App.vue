@@ -41,6 +41,8 @@ const headers = [
 const loading = ref(false)
 const itemsPerPage = ref(10)
 const totalItems = ref(100)
+const snackbar = ref(false)
+const errorMessage = ref('')
 
 const editedIndex = ref(-1)
 const editDialog = ref(false)
@@ -93,9 +95,14 @@ const resetFormFields = () => {
 
 // Main
 const retrieveTotalItems = async () => {
-    const { size } = await fetch(`${API_URL}/appointments/size`).then((res) => res.json())
-
-    totalItems.value = size
+    try {
+        const { size } = await fetch(`${API_URL}/appointments/size`).then((res) => res.json())
+        totalItems.value = size
+    } catch (e) {
+        console.error(e)
+        errorMessage.value = 'Failed to retrieve total items.'
+        snackbar.value = true
+    }
 }
 
 const retrieveNodeStatus = async () => {
@@ -113,6 +120,9 @@ const retrieveNodeStatus = async () => {
         node1Available.value = false
         node2Available.value = false
         node3Available.value = false
+
+        errorMessage.value = 'Failed to retrieve node status.'
+        snackbar.value = true
     }
 }
 
@@ -125,11 +135,20 @@ const fetchPage = async ({ page = 1 } = {}) => {
     params.set('page', page - 1)
     params.set('itemsPerPage', itemsPerPage.value)
     if (nodeUsed.value !== 0) params.set('node', nodeUsed.value)
-    const appointments = await fetch(`${API_URL}/appointments?${params}`).then((res) => res.json())
 
-    items.splice(0, items.length, ...appointments)
+    try {
+        const appointments = await fetch(`${API_URL}/appointments?${params}`).then((res) =>
+            res.json()
+        )
 
-    loading.value = false
+        items.splice(0, items.length, ...appointments)
+
+        loading.value = false
+    } catch (e) {
+        console.error(e)
+        errorMessage.value = 'Failed to fetch page.'
+        snackbar.value = true
+    }
 }
 
 const submitForm = async () => {
@@ -144,18 +163,24 @@ const submitForm = async () => {
 
     if (nodeUsed.value !== 0) body.node = nodeUsed.value
 
-    const newID = await fetch(`${API_URL}/appointments`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-    })
-        .then((res) => res.json())
-        .then((data) => data.apptid)
+    try {
+        const newID = await fetch(`${API_URL}/appointments`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        })
+            .then((res) => res.json())
+            .then((data) => data.apptid)
 
-    items.push({ ...data, apptid: newID })
+        items.push({ ...data, apptid: newID })
 
-    resetFormFields()
-    totalItems.value++
+        resetFormFields()
+        totalItems.value++
+    } catch (e) {
+        console.error(e)
+        errorMessage.value = 'Failed to submit form.'
+        snackbar.value = true
+    }
 }
 
 const editItem = (item) => {
@@ -191,14 +216,21 @@ const saveEdit = async () => {
     if (nodeUsed.value !== 0) body.node = nodeUsed.value
 
     const idToEdit = items[editedIndex.value].apptid
-    await fetch(`${API_URL}/appointments/${idToEdit}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-    })
 
-    editedIndex.value = -1
-    resetFormFields()
+    try {
+        await fetch(`${API_URL}/appointments/${idToEdit}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        })
+
+        editedIndex.value = -1
+        resetFormFields()
+    } catch (e) {
+        console.error(e)
+        errorMessage.value = 'Failed to save edit.'
+        snackbar.value = true
+    }
 }
 
 const deleteItemConfirm = async () => {
@@ -213,14 +245,21 @@ const deleteItemConfirm = async () => {
     }
 
     const idToDelete = items[editedIndex.value].apptid
-    await fetch(`${API_URL}/appointments/${idToDelete}`, {
-        method: 'DELETE',
-        ...options
-    })
 
-    editedIndex.value = -1
-    resetFormFields()
-    totalItems.value--
+    try {
+        await fetch(`${API_URL}/appointments/${idToDelete}`, {
+            method: 'DELETE',
+            ...options
+        })
+
+        editedIndex.value = -1
+        resetFormFields()
+        totalItems.value--
+    } catch (e) {
+        console.error(e)
+        errorMessage.value = 'Failed to delete item.'
+        snackbar.value = true
+    }
 }
 
 // Lifecycle hooks
@@ -232,6 +271,10 @@ onMounted(() => {
 </script>
 
 <template>
+    <v-snackbar v-model="snackbar" :timeout="5000" color="error" dark elevation="5">
+        {{ errorMessage }}
+    </v-snackbar>
+
     <div id="content">
         <div id="node-status">
             <div class="node mx-2">
