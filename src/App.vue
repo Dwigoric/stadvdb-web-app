@@ -234,7 +234,7 @@ const saveEdit = async () => {
 }
 
 const deleteItemConfirm = async () => {
-    items.splice(editedIndex.value, 1)
+    const [itemToDelete] = items.splice(editedIndex.value, 1)
     deleteDialog.value = false
 
     const options = {}
@@ -244,7 +244,7 @@ const deleteItemConfirm = async () => {
         options.body = JSON.stringify({ node: nodeUsed.value })
     }
 
-    const idToDelete = items[editedIndex.value].apptid
+    const idToDelete = itemToDelete.apptid
 
     try {
         await fetch(`${API_URL}/appointments/${idToDelete}`, {
