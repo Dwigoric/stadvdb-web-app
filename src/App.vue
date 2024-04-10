@@ -155,7 +155,16 @@ const editItem = (item) => {
     if (!node1Available.value) return
 
     editedIndex.value = items.indexOf(item)
-    Object.assign(formFields, item)
+
+    const itemCopy = JSON.parse(JSON.stringify(item))
+
+    // Convert TimeQueued, QueueDate, StartTime, and EndTime to the format 'YYYY-MM-DDTHH:MM'
+    itemCopy.TimeQueued = new Date(itemCopy.TimeQueued).toISOString().slice(0, 16)
+    itemCopy.QueueDate = new Date(itemCopy.QueueDate).toISOString().slice(0, 16)
+    itemCopy.StartTime = new Date(itemCopy.StartTime).toISOString().slice(0, 16)
+    itemCopy.EndTime = new Date(itemCopy.EndTime).toISOString().slice(0, 16)
+
+    Object.assign(formFields, itemCopy)
     editDialog.value = true
 }
 
@@ -432,6 +441,7 @@ onMounted(() => {
             no-data-text="No appointments found"
             @update:options="fetchPage"
         >
+            <!-- eslint-disable-next-line vue/valid-v-slot -->
             <template #item.actions="{ item }">
                 <v-icon class="me-2" size="small" @click="editItem(item)">
                     {{
