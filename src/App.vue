@@ -99,14 +99,21 @@ const retrieveTotalItems = async () => {
 }
 
 const retrieveNodeStatus = async () => {
-    const result = await fetch(`${API_URL}/status`).then((res) => res.json())
+    try {
+        const result = await fetch(`${API_URL}/status`).then((res) => res.json())
 
-    node1Available.value = result.node1
-    node2Available.value = result.node2
-    node3Available.value = result.node3
+        node1Available.value = result.node1
+        node2Available.value = result.node2
+        node3Available.value = result.node3
 
-    // If the node being used is not available, reset it to 0
-    if (nodeUsed.value !== 0 && !result[`node${nodeUsed.value}`]) nodeUsed.value = 0
+        // If the node being used is not available, reset it to 0
+        if (nodeUsed.value !== 0 && !result[`node${nodeUsed.value}`]) nodeUsed.value = 0
+    } catch (e) {
+        console.error(e)
+        node1Available.value = false
+        node2Available.value = false
+        node3Available.value = false
+    }
 }
 
 const fetchPage = async ({ page = 1 } = {}) => {
