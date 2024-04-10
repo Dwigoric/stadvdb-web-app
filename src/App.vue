@@ -137,7 +137,7 @@ const submitForm = async () => {
 
     if (nodeUsed.value !== 0) body.node = nodeUsed.value
 
-    const newID = await fetch(`${API_URL}/appointments`, {
+    const newID = await fetch(`${API_URL}/appointment`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
