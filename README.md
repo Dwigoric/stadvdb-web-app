@@ -1,6 +1,6 @@
-# crud-ops-sim
+# CRUD Operations Simulator
 
-This template should help get you started developing with Vue 3 in Vite.
+This is the frontend portion for the STADVDB CRUD Simulator.
 
 ## Recommended IDE Setup
 
